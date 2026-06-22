@@ -111,3 +111,32 @@ int search_by_title_partial(const DiaryEntry *entries, int count, const char *su
 
     return matches;
 }
+
+int search_by_date(const DiaryEntry *entries, int count, const char *date, int *results, int max_results) {
+    int matches = 0;
+    for (int i = 0; i < count && matches < max_results; i++) {
+        if (strcmp(entries[i].date, date) == 0)
+            results[matches++] = i;
+    }
+    return matches;
+}
+
+int search_by_date_range(const DiaryEntry *entries, int count, const char *from, const char *to, int *results, int max_results) {
+    int matches = 0;
+    for (int i = 0; i < count && matches < max_results; i++) {
+        if (strcmp(entries[i].date, from) >= 0 && strcmp(entries[i].date, to) <= 0)
+            results[matches++] = i;
+    }
+    return matches;
+}
+
+void sort_entries_by_title(DiaryEntry *entries, int count) {
+    qsort(entries, count, sizeof(DiaryEntry), compare_by_title);
+}
+
+void print_entry(const DiaryEntry *entry) {
+    printf("Title: %s\n", entry->title);
+    printf("Date:  %s\n", entry->date);
+    printf("Body:\n%s\n", entry->body);
+    printf("---\n");
+}

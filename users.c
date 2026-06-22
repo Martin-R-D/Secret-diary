@@ -88,16 +88,39 @@ static int user_exists(const char *username)
     fclose(f);
     return 0;
 }
-
 /*
  * read_password()
- *   Reads a password from stdin without echoing (POSIX only).
- *   Falls back to normal fgets on non-POSIX systems.
+ * Reads a password from stdin without echoing.
+ * Works cleanly on both Windows and POSIX systems.
  */
+#ifdef _WIN32
+#include <conio.h>
+#endif
+
 static void read_password(char *buf, size_t size)
 {
-#ifdef _POSIX_C_SOURCE
-    /* Disable echo */
+#ifdef _WIN32
+    size_t i = 0;
+    int ch;
+    // Read characters until Enter (13 or 10) is pressed
+    while (i < size - 1) {
+        ch = _getch();
+        if (ch == 13 || ch == 10 || ch == EOF) {
+            break;
+        } else if (ch == 8 || ch == 127) { // Handle Backspace
+            if (i > 0) {
+                i--;
+                printf("\b \b"); // Erase character from terminal visual
+            }
+        } else {
+            buf[i++] = (char)ch;
+            printf("*"); // Print a mask instead of plain text
+        }
+    }
+    buf[i] = '\0';
+    printf("\n");
+#elif defined(_POSIX_C_SOURCE)
+    /* Disable echo for Linux/macOS systems */
     #include <termios.h>
     struct termios oldt, newt;
     tcgetattr(fileno(stdin), &oldt);
@@ -107,10 +130,12 @@ static void read_password(char *buf, size_t size)
     fgets(buf, (int)size, stdin);
     tcsetattr(fileno(stdin), TCSANOW, &oldt);
     printf("\n");
-#else
-    fgets(buf, (int)size, stdin);
-#endif
     trim_newline(buf);
+#else
+    // Fallback if anything else
+    fgets(buf, (int)size, stdin);
+    trim_newline(buf);
+#endif
 }
 
 /* ------------------------------------------------------------------ */

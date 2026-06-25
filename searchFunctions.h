@@ -2,7 +2,7 @@
 #define SEARCH_H
 
 typedef struct {
-    char title[100];
+    char title[31];
     char date[11]; // YYYY-MM-DD
     char body[1024];
 } DiaryEntry;

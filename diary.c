@@ -26,7 +26,12 @@ void add_diary_entry(void) {
 
     printf("Enter title: ");
     fgets(entry.title, sizeof(entry.title), stdin);
-    entry.title[strcspn(entry.title, "\n")] = '\0'; // Strip newline
+    entry.title[strcspn(entry.title, "\n")] = '\0';
+
+    if (strlen(entry.title) > 30) {
+        printf("Title must be 30 characters or less.\n");
+        return;
+    }
 
     printf("Enter content body:\n");
     fgets(entry.body, sizeof(entry.body), stdin);

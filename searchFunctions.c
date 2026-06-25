@@ -56,18 +56,56 @@ int search_by_title_fast(const DiaryEntry *entries, int count, const char *title
     for (int i = 0; i < count; i++)
         index_map[i] = i;
 
-    for (int i = 0; i < count - 1; i++) {
-        for (int j = i + 1; j < count; j++) {
-            if (strcmp(sorted[i].title, sorted[j].title) > 0) {
-                DiaryEntry tmp = sorted[i];
-                sorted[i] = sorted[j];
-                sorted[j] = tmp;
-                int t = index_map[i];
-                index_map[i] = index_map[j];
-                index_map[j] = t;
+    DiaryEntry *temp_entries = malloc(count * sizeof(DiaryEntry));
+    int *temp_indices = malloc(count * sizeof(int));
+    if (!temp_entries || !temp_indices) {
+        free(temp_entries);
+        free(temp_indices);
+        free(sorted);
+        free(index_map);
+        return -1;
+    }
+
+    for (int width = 1; width < count; width *= 2) {
+        for (int i = 0; i < count; i += 2 * width) {
+            int left = i;
+            int mid = i + width;
+            if (mid > count) mid = count;
+            int right = i + 2 * width;
+            if (right > count) right = count;
+
+            int l = left, r = mid, k = left;
+            while (l < mid && r < right) {
+                if (strcmp(sorted[l].title, sorted[r].title) <= 0) {
+                    temp_entries[k] = sorted[l];
+                    temp_indices[k] = index_map[l];
+                    l++;
+                } else {
+                    temp_entries[k] = sorted[r];
+                    temp_indices[k] = index_map[r];
+                    r++;
+                }
+                k++;
+            }
+            while (l < mid) {
+                temp_entries[k] = sorted[l];
+                temp_indices[k] = index_map[l];
+                l++;
+                k++;
+            }
+            while (r < right) {
+                temp_entries[k] = sorted[r];
+                temp_indices[k] = index_map[r];
+                r++;
+                k++;
             }
         }
+        memcpy(sorted, temp_entries, count * sizeof(DiaryEntry));
+        memcpy(index_map, temp_indices, count * sizeof(int));
     }
+
+    free(temp_entries);
+    free(temp_indices);
 
     int lo = 0, hi = count - 1, result = -1;
     while (lo <= hi) {

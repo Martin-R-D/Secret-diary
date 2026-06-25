@@ -76,22 +76,39 @@ void view_diary_history(void) {
     }
     fclose(f);
 
-    // Step 1: Decrypt data file temporarily for streaming
     decrypt_file(filename, current_user);
 
-    f = fopen(filename, "rb");
-    if (!f) return;
+    DiaryEntry *entries = NULL;
+    int count = load_entries(filename, &entries);
 
-    DiaryEntry entry;
-    printf("\n==================== %s's DIARY HISTORY ====================", current_user);
-    while (fread(&entry, sizeof(DiaryEntry), 1, f) == 1) {
-        printf("\nDate:  %s\nTitle: %s", entry.date, entry.title);
-        printf("\n---------------------------------------------------------");
-        printf("\n%s\n", entry.body);
-        printf("=========================================================");
+    if (count <= 0) {
+        printf("\nYour diary is currently empty. Start writing some memories!\n");
+        encrypt_file(filename, current_user);
+        return;
     }
-    fclose(f);
 
-    // Step 2: Re-encrypt immediately to secure plain text signatures
+    printf("\n==================== %s's DIARY HISTORY ====================\n", current_user);
+    for (int i = 0; i < count; i++) {
+        printf("  %d. [%s] %s\n", i + 1, entries[i].date, entries[i].title);
+    }
+    printf("=========================================================\n");
+
+    printf("Enter entry number to read (0 to go back): ");
+    int choice;
+    if (scanf("%d", &choice) != 1 || choice < 0 || choice > count) {
+        printf("Invalid selection.\n");
+        while (getchar() != '\n');
+        free(entries);
+        encrypt_file(filename, current_user);
+        return;
+    }
+    getchar();
+
+    if (choice > 0) {
+        printf("\n");
+        print_entry(&entries[choice - 1]);
+    }
+
+    free(entries);
     encrypt_file(filename, current_user);
 }
